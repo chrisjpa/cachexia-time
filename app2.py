@@ -13,9 +13,8 @@ BASELINE_SURVIVAL = {
 # Time-specific Cox coefficients for age and treatment
 # Format: { time: {'age': coeff, 'treatment': coeff} }
 TIME_VARYING_COEFFICIENTS = {
-    1: {'ANCESTRY_LABEL[T.AFR]': -0.192357, 'ANCESTRY_LABEL[T.ASJ] ': -0.238654, 'ANCESTRY_LABEL[T.EAS]': -0.228684 , 'eur': -0.182048 , 'nam': -0.595716 ,'sas': -0.177710,'unk': -0.637973,'bmi': 0.088436, 'cdm': 0.519742, 'ecog': 0.199735, 'tp53': 0.198965, 'stk11': 0.339435},
-    2: {'ANCESTRY_LABEL[T.AFR]': -0.192357, 'ANCESTRY_LABEL[T.ASJ] ': -0.238654, 'ANCESTRY_LABEL[T.EAS]': -0.228684 , 'eur': -0.182048 , 'nam': -0.595716 ,'sas': -0.177710,'unk': -0.637973,'bmi': 0.088436, 'cdm': 0.519742, 'ecog': 0.199735, 'tp53': 0.198965, 'stk11': 0.339435},
-    3: {'ANCESTRY_LABEL[T.AFR]': -0.192357, 'ANCESTRY_LABEL[T.ASJ] ': -0.238654, 'ANCESTRY_LABEL[T.EAS]': -0.228684 , 'eur': -0.182048 , 'nam': -0.595716 ,'sas': -0.177710,'unk': -0.637973,'bmi': 0.088436, 'cdm': 0.519742, 'ecog': 0.199735, 'tp53': 0.198965, 'stk11': 0.339435},
+    "age": {'ANCESTRY_LABEL[T.AFR]': -0.192357, 'ANCESTRY_LABEL[T.ASJ] ': -0.238654, 'ANCESTRY_LABEL[T.EAS]': -0.228684 , 'eur': -0.182048 , 'nam': -0.595716 ,'sas': -0.177710,'unk': -0.637973,'bmi': 0.088436, 'cdm': 0.519742, 'ecog': 0.199735, 'tp53': 0.198965, 'stk11': 0.339435},
+    "treatment": {'ANCESTRY_LABEL[T.AFR]': -0.192357, 'ANCESTRY_LABEL[T.ASJ] ': -0.238654, 'ANCESTRY_LABEL[T.EAS]': -0.228684 , 'eur': -0.182048 , 'nam': -0.595716 ,'sas': -0.177710,'unk': -0.637973,'bmi': 0.088436, 'cdm': 0.519742, 'ecog': 0.199735, 'tp53': 0.198965, 'stk11': 0.339435}
 }
 
 @app.route('/')
