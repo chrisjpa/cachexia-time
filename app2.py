@@ -1,46 +1,50 @@
-import pandas as pd
-import matplotlib.pyplot as plt
+from flask import Flask, render_template, request
+import numpy as np
 
-# 1. Define the baseline survival function S_0(t) (survival probabilities for baseline covariates)
-baseline_survival = pd.Series(
-    data=[1.0, 0.92, 0.85, 0.78, 0.70, 0.65, 0.60],  # Simulated baseline survival
-    index=[0, 2, 4, 6, 8, 10, 12]  # Time points (e.g., years)
-)
+app = Flask(__name__)
 
-# 2. Generate multiple sets of coefficients (β) for different combinations of covariates
-# Coefficients will represent combinations like: [age: 0.03, treatment: -0.7], etc.
-coefficients_sets = [
-    {"age": 0.03, "treatment": -0.7},  # Coefficients for one model
-    {"age": 0.05, "treatment": -0.8},  # Coefficients for another model
-    {"age": 0.02, "treatment": -0.5},  # Another set of coefficients
-    {"age": 0.04, "treatment": -1.0},  # Another variation of coefficients
-]
+# Baseline survival at specific timepoints
+BASELINE_SURVIVAL = {
+    1: 0.77206,
+    2: 0.70944,
+    3: 0.65566,
+}
 
-# 3. For each set of coefficients, calculate the survival curve
-plt.figure(figsize=(8, 6))
+# Time-specific Cox coefficients for age and treatment
+# Format: { time: {'age': coeff, 'treatment': coeff} }
+TIME_VARYING_COEFFICIENTS = {
+    1: {'ANCESTRY_LABEL[T.AFR]': -0.192357, 'ANCESTRY_LABEL[T.ASJ] ': -0.238654, 'ANCESTRY_LABEL[T.EAS]': -0.228684 , 'eur': -0.182048 , 'nam': -0.595716 ,'sas': -0.177710,'unk': -0.637973,'bmi': 0.088436, 'cdm': 0.519742, 'ecog': 0.199735, 'tp53': 0.198965, 'stk11': 0.339435},
+    2: {'ANCESTRY_LABEL[T.AFR]': -0.192357, 'ANCESTRY_LABEL[T.ASJ] ': -0.238654, 'ANCESTRY_LABEL[T.EAS]': -0.228684 , 'eur': -0.182048 , 'nam': -0.595716 ,'sas': -0.177710,'unk': -0.637973,'bmi': 0.088436, 'cdm': 0.519742, 'ecog': 0.199735, 'tp53': 0.198965, 'stk11': 0.339435},
+    3: {'ANCESTRY_LABEL[T.AFR]': -0.192357, 'ANCESTRY_LABEL[T.ASJ] ': -0.238654, 'ANCESTRY_LABEL[T.EAS]': -0.228684 , 'eur': -0.182048 , 'nam': -0.595716 ,'sas': -0.177710,'unk': -0.637973,'bmi': 0.088436, 'cdm': 0.519742, 'ecog': 0.199735, 'tp53': 0.198965, 'stk11': 0.339435},
+}
 
-# Loop through each set of coefficients and compute the survival curve
-for coefficients in coefficients_sets:
-    # 4. Assume a baseline patient with specific covariate values (e.g., age=60, treatment=1)
-    patient = {"age": 60, "treatment": 1}
+@app.route('/')
+def home():
+    return render_template('form.html')
 
-    # 5. Compute the linear predictor (β^T X) for the patient
-    linear_predictor = coefficients["age"] * patient["age"] + coefficients["treatment"] * patient["treatment"]
+@app.route('/result', methods=['POST'])
+def result():
+    # Get user input
+    age = float(request.form['age'])
+    treatment = float(request.form['treatment'])  # 0 or 1
 
-    # 6. Compute the survival probabilities for this patient using the Cox formula
-    survival_prob = baseline_survival ** np.exp(linear_predictor)
+    survival_curve = {}
 
-    # 7. Plot the survival curve for this coefficient set
-    label = f"Age Coeff={coefficients['age']}, Treatment Coeff={coefficients['treatment']}"
-    plt.plot(survival_prob.index, survival_prob.values, marker='o', label=label)
+    # Loop over each time point
+    for time in BASELINE_SURVIVAL:
+        s0 = BASELINE_SURVIVAL[time]
+        coeffs = TIME_VARYING_COEFFICIENTS[time]
 
-# 8. Customize the plot
-plt.title(f"Predicted Survival Curves for Different Coefficients")
-plt.xlabel("Time (Years)")
-plt.ylabel("Survival Probability")
-plt.legend(title="Coefficients Sets")
-plt.grid(True)
+        # Compute time-specific linear predictor
+        linear_predictor = coeffs['ANCESTRY_LABEL[T.AFR]'] * 'ANCESTRY_LABEL[T.AFR]' + coeffs['ANCESTRY_LABEL[T.ASJ] '] * 'ANCESTRY_LABEL[T.ASJ] ' + coeffs['ANCESTRY_LABEL[T.EAS]'] * 'ANCESTRY_LABEL[T.EAS]' + coeffs['eur'] * 'eur' + coeffs['nam'] * 'nam' + coeffs['sas'] * 'sas' + coeffs['unk'] * 'unk' + coeffs['bmi'] * 'bmi' + coeffs['cdm'] * 'cdm' + coeffs['ecog'] * 'ecog' + coeffs['tp53'] * 'tp53' + coeffs['stk11'] * 'stk11'
 
-# Show the plot
-plt.show()
+        # Cox survival formula
+        s_tx = s0 ** np.exp(linear_predictor)
+        survival_curve[time] = round(s_tx, 4)
+
+    return render_template('result.html', age=age, treatment=treatment, survival=survival_curve)
+
+if __name__ == '__main__':
+    app.run(debug=True)
+
 
