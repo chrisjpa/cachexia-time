@@ -2,3 +2,6 @@ flask
 pandas
 matplotlib
 lifelines
+dash
+plotly
+gunicorn
