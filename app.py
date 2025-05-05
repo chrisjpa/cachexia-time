@@ -1,43 +1,83 @@
-from flask import Flask, request, send_file
-import pandas as pd
-import matplotlib.pyplot as plt
-from lifelines import CoxPHFitter
-import io
+from flask import Flask, render_template, request
+import numpy as np
 
 app = Flask(__name__)
 
-# Example data
-df = pd.DataFrame({
-    "duration": [5, 8, 12, 4, 10],
-    "event": [1, 0, 1, 1, 0],
-    "age": [60, 70, 50, 80, 65],
-    "treatment": [1, 0, 1, 0, 1]
-})
-
-# Cox model
-cph = CoxPHFitter()
-cph.fit(df, duration_col='duration', event_col='event')
-
-@app.route("/survival")
-def survival():
-    age = float(request.args.get("age", 60))
-    treatment = int(request.args.get("treatment", 1))
+def calculate_hazard_ratio(coefficients, covariates):
+    """
+    Calculate the hazard ratio based on coefficients and covariate values.
     
-    new_data = pd.DataFrame([{"age": age, "treatment": treatment}])
-    surv_func = cph.predict_survival_function(new_data)
+    :param coefficients: Dictionary with the Cox model coefficients
+    :param covariates: Dictionary with the covariate values for a new individual
+    :return: Hazard ratio for the new individual
+    """
+    # Calculate the linear predictor (log of hazard ratio)
+    linear_predictor = sum(coefficients[covariate] * covariates[covariate] for covariate in coefficients)
     
-    plt.figure()
-    surv_func.plot()
-    plt.title(f"Survival Curve (Age={age}, Treatment={treatment})")
-    plt.xlabel("Time")
-    plt.ylabel("Event-Free Probability")
+    # Calculate the hazard ratio (exponentiation of the linear predictor)
+    hazard_ratio = np.exp(linear_predictor)
     
-    buf = io.BytesIO()
-    plt.savefig(buf, format="png")
-    buf.seek(0)
-    plt.close()
-    return send_file(buf, mimetype="image/png")
+    return hazard_ratio
 
-# Required for deployment
+@app.route("/", methods=["GET", "POST"])
+def index():
+    hazard_ratio = None
+    if request.method == "POST":
+        # Get the values from the form input
+        age = float(request.form["age"])
+        sex = float(request.form["sex"])
+        'ANCESTRY_LABEL[T.AFR]'= float(request.form["ANCESTRY_LABEL[T.AFR]"]) ,  # Example coefficient for age
+        'ANCESTRY_LABEL[T.ASJ]'= float(request.form["ANCESTRY_LABEL[T.ASJ]"]),   # Example coefficient for sex
+        'ANCESTRY_LABEL[T.EAS]'= float(request.form["ANCESTRY_LABEL[T.EAS]"]),
+        'eur' = float(request.form["eur"]),
+        'nam' = float(request.form["nam"]),
+        'sas'= float(request.form["sas"]),
+        'unk'= float(request.form["unk"]),
+        'bmi'= float(request.form["bmi"]),
+        'cdm'= float(request.form["cdm"]), 
+        'ecog'= float(request.form["ecog"]), 
+        'tp53' = float(request.form["tp53"]), 
+        'stk11' = float(request.form["stk11"])
+    
+        # Define coefficients (these can also be input dynamically if needed)
+        coefficients = {
+            'ANCESTRY_LABEL[T.AFR]': -0.192357,  # Example coefficient for age
+            'ANCESTRY_LABEL[T.ASJ] ': -0.238654,   # Example coefficient for sex
+            'ANCESTRY_LABEL[T.EAS]': -0.228684,
+            'ANCESTRY_LABEL[T.EAS]': -0.228684,
+            'eur': -0.182048,
+            'nam': -0.595716, 
+            'sas': -0.177710,
+            'unk': -0.637973,
+            'bmi': 0.088436,
+            'cdm': 0.519742, 
+            'ecog': 0.199735, 
+            'tp53': 0.198965, 
+            'stk11': 0.339435
+
+        }
+
+        # Define covariates based on user input
+        covariates = {
+            'ANCESTRY_LABEL[T.AFR]': ANCESTRY_LABEL[T.AFR] ,  # Example coefficient for age
+            'ANCESTRY_LABEL[T.ASJ]': ANCESTRY_LABEL[T.ASJ],   # Example coefficient for sex
+            'ANCESTRY_LABEL[T.EAS]': ANCESTRY_LABEL[T.EAS],
+            'eur': eur,
+            'nam': nam,
+            'sas': sas,
+            'unk': unk,
+            'bmi': bmi,
+            'cdm': cdm, 
+            'ecog': ecog, 
+            'tp53': tp5, 
+            'stk11': stk11
+        }
+
+        # Calculate the hazard ratio
+        hazard_ratio = calculate_hazard_ratio(coefficients, covariates)
+
+    return render_template("index.html", hazard_ratio=hazard_ratio)
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080)
+    app.run(debug=True)
+
