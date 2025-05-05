@@ -24,11 +24,9 @@ def index():
     hazard_ratio = None
     if request.method == "POST":
         # Get the values from the form input
-        age = float(request.form["age"])
-        sex = float(request.form["sex"])
-        'afr'= float(request.form["ANCESTRY_LABEL[T.AFR]"]) ,  # Example coefficient for age
-        'asj'= float(request.form["ANCESTRY_LABEL[T.ASJ]"]),   # Example coefficient for sex
-        'eas'= float(request.form["ANCESTRY_LABEL[T.EAS]"]),
+        'afr'= float(request.form["afr"]) ,  # Example coefficient for age
+        'asj'= float(request.form["asj"]),   # Example coefficient for sex
+        'eas'= float(request.form["eas"]),
         'eur' = float(request.form["eur"]),
         'nam' = float(request.form["nam"]),
         'sas'= float(request.form["sas"]),
