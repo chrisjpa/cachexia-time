@@ -1,80 +1,99 @@
-from flask import Flask, render_template, request
+import dash
+from dash import dcc, html, Input, Output
 import numpy as np
+import plotly.graph_objects as go
 
-app = Flask(__name__)
+# Dash app setup
+app = dash.Dash(__name__)
+server = app.server  # needed for deployment
 
-def calculate_hazard_ratio(coefficients, covariates):
-    """
-    Calculate the hazard ratio based on coefficients and covariate values.
+# Time and baseline cumulative hazard (CH0)
+time_points = np.array([1, 3, 5])
+baseline_cumhaz = np.array([0.75, 0.78, 0.80])
+
+# Beta coefficients
+betas = {
+    'age': -0.2,
+    'ethnicity_black': -0.4,
+    'ethnicity_white': -0.1,
+    'ethnicity_asian': -0.6,
+    'bmi': 1.0,
+    'ses': 0.5
+}
+
+# Layout
+app.layout = html.Div([
+    html.H2("Interactive Cumulative Incidence Curve"),
     
-    :param coefficients: Dictionary with the Cox model coefficients
-    :param covariates: Dictionary with the covariate values for a new individual
-    :return: Hazard ratio for the new individual
-    """
-    # Calculate the linear predictor (log of hazard ratio)
-    linear_predictor = sum(coefficients[covariate] * covariates[covariate] for covariate in coefficients)
+    html.Label("Age:"),
+    dcc.Input(id='input-age', type='number', value=50),
     
-    # Calculate the hazard ratio (exponentiation of the linear predictor)
-    hazard_ratio = np.exp(linear_predictor)
+    html.Label("BMI:"),
+    dcc.Input(id='input-bmi', type='number', value=25),
     
-    return hazard_ratio
-
-@app.route("/", methods=["GET", "POST"])
-def index():
-    hazard_ratio = None
-    if request.method == "POST":
-        # Get the values from the form input
-        'afr'= float(request.form["afr"]) ,  # Example coefficient for age
-        'asj'= float(request.form["asj"]),   # Example coefficient for sex
-        'eas'= float(request.form["eas"]),
-        'eur' = float(request.form["eur"]),
-        'nam' = float(request.form["nam"]),
-        'sas'= float(request.form["sas"]),
-        'unk'= float(request.form["unk"]),
-        'bmi'= float(request.form["bmi"]),
-        'cdm'= float(request.form["cdm"]), 
-        'ecog'= float(request.form["ecog"]), 
-        'tp53' = float(request.form["tp53"]), 
-        'stk11' = float(request.form["stk11"])
+    html.Label("SES:"),
+    dcc.Input(id='input-ses', type='number', value=2),
     
-        # Define coefficients (these can also be input dynamically if needed)
-        coefficients = {
-            'afr': -0.192357,  # Example coefficient for age
-            'asj ': -0.238654,   # Example coefficient for sex
-            'eas': -0.228684,
-            'eur': -0.182048,
-            'nam': -0.595716, 
-            'sas': -0.177710,
-            'unk': -0.637973,
-            'bmi': 0.088436,
-            'cdm': 0.519742, 
-            'ecog': 0.199735, 
-            'tp53': 0.198965, 
-            'stk11': 0.339435
+    html.Label("Ethnicity:"),
+    dcc.Dropdown(
+        id='input-ethnicity',
+        options=[
+            {'label': 'Black', 'value': 'black'},
+            {'label': 'White', 'value': 'white'},
+            {'label': 'Asian', 'value': 'asian'}
+        ],
+        value='white'
+    ),
+    
+    dcc.Graph(id='cic-graph')
+])
 
-        }
+# Callback
+@app.callback(
+    Output('cic-graph', 'figure'),
+    Input('input-age', 'value'),
+    Input('input-bmi', 'value'),
+    Input('input-ses', 'value'),
+    Input('input-ethnicity', 'value')
+)
+def update_graph(age, bmi, ses, ethnicity):
+    # Construct covariate vector
+    covariates = {
+        'age': age,
+        'ethnicity_black': 1 if ethnicity == 'black' else 0,
+        'ethnicity_white': 1 if ethnicity == 'white' else 0,
+        'ethnicity_asian': 1 if ethnicity == 'asian' else 0,
+        'bmi': bmi,
+        'ses': ses
+    }
 
-        # Define covariates based on user input
-        covariates = {
-            'afr': afr ,  # Example coefficient for age
-            'asj': asj,   # Example coefficient for sex
-            'eas': eas,
-            'eur': eur,
-            'nam': nam,
-            'sas': sas,
-            'unk': unk,
-            'bmi': bmi,
-            'cdm': cdm, 
-            'ecog': ecog, 
-            'tp53': tp5, 
-            'stk11': stk11
-        }
+    # Compute linear predictor and hazard ratio
+    lp = sum(covariates[k] * betas[k] for k in betas)
+    hr = np.exp(lp)
 
-        # Calculate the hazard ratio
-        hazard_ratio = calculate_hazard_ratio(coefficients, covariates)
+    # Calculate individual cumulative hazard and incidence
+    cum_hazard = baseline_cumhaz * hr
+    cum_incidence = 1 - np.exp(-cum_hazard)
 
-    return render_template("index.html", hazard_ratio=hazard_ratio)
+    # Plot
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=time_points,
+        y=cum_incidence,
+        mode='lines+markers',
+        line=dict(color='blue'),
+        name='CIC'
+    ))
+    fig.update_layout(
+        title='Cumulative Incidence Curve',
+        xaxis_title='Time (Years)',
+        yaxis_title='Cumulative Incidence',
+        template='plotly_white',
+        yaxis=dict(range=[0, 1])
+    )
+    return fig
 
-if __name__ == "__main__":
-    app.run(debug=True)
+# Run
+if __name__ == '__main__':
+    app.run_server(debug=True)
 
