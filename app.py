@@ -26,9 +26,9 @@ def index():
         # Get the values from the form input
         age = float(request.form["age"])
         sex = float(request.form["sex"])
-        'ANCESTRY_LABEL[T.AFR]'= float(request.form["ANCESTRY_LABEL[T.AFR]"]) ,  # Example coefficient for age
-        'ANCESTRY_LABEL[T.ASJ]'= float(request.form["ANCESTRY_LABEL[T.ASJ]"]),   # Example coefficient for sex
-        'ANCESTRY_LABEL[T.EAS]'= float(request.form["ANCESTRY_LABEL[T.EAS]"]),
+        'afr'= float(request.form["ANCESTRY_LABEL[T.AFR]"]) ,  # Example coefficient for age
+        'asj'= float(request.form["ANCESTRY_LABEL[T.ASJ]"]),   # Example coefficient for sex
+        'eas'= float(request.form["ANCESTRY_LABEL[T.EAS]"]),
         'eur' = float(request.form["eur"]),
         'nam' = float(request.form["nam"]),
         'sas'= float(request.form["sas"]),
@@ -41,10 +41,9 @@ def index():
     
         # Define coefficients (these can also be input dynamically if needed)
         coefficients = {
-            'ANCESTRY_LABEL[T.AFR]': -0.192357,  # Example coefficient for age
-            'ANCESTRY_LABEL[T.ASJ] ': -0.238654,   # Example coefficient for sex
-            'ANCESTRY_LABEL[T.EAS]': -0.228684,
-            'ANCESTRY_LABEL[T.EAS]': -0.228684,
+            'afr': -0.192357,  # Example coefficient for age
+            'asj ': -0.238654,   # Example coefficient for sex
+            'eas': -0.228684,
             'eur': -0.182048,
             'nam': -0.595716, 
             'sas': -0.177710,
@@ -59,9 +58,9 @@ def index():
 
         # Define covariates based on user input
         covariates = {
-            'ANCESTRY_LABEL[T.AFR]': ANCESTRY_LABEL[T.AFR] ,  # Example coefficient for age
-            'ANCESTRY_LABEL[T.ASJ]': ANCESTRY_LABEL[T.ASJ],   # Example coefficient for sex
-            'ANCESTRY_LABEL[T.EAS]': ANCESTRY_LABEL[T.EAS],
+            'afr': afr ,  # Example coefficient for age
+            'asj': asj,   # Example coefficient for sex
+            'eas': eas,
             'eur': eur,
             'nam': nam,
             'sas': sas,
